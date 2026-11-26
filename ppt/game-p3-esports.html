@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>风格预览 P3 · 电竞直播 HUD</title>
+<style>
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#0b0e14}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:#0b0e14}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:#0b0e14}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;visibility:hidden;opacity:0;pointer-events:none}
+.slide.active{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+:root{--bg:#0b0e14;--blue:#2f7bff;--orange:#ff8b2f;--white:#f2f6fc;--dim:#7c8aa0;--panel:#121826;--edge:#1e2a42}
+.slide{font-family:"Microsoft YaHei",sans-serif;color:var(--white);display:flex;flex-direction:column;
+ background:
+  linear-gradient(115deg,rgba(47,123,255,.10),transparent 38%),
+  linear-gradient(245deg,rgba(255,139,47,.08),transparent 42%),var(--bg)}
+.top{display:flex;justify-content:space-between;padding:56px 110px 0;align-items:center}
+.league{display:flex;align-items:center;gap:16px;font:800 22px "Microsoft YaHei";letter-spacing:5px}
+.league .mark{width:14px;height:40px;background:linear-gradient(180deg,var(--blue),var(--orange))}
+.league .t{color:var(--dim)} .league .b{color:var(--white)}
+.live{display:flex;align-items:center;gap:12px;font:700 20px Consolas;letter-spacing:3px;color:var(--dim)}
+.live .dot{width:12px;height:12px;border-radius:50%;background:#ff3b5c;box-shadow:0 0 14px #ff3b5c;animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.35}}
+.mid{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 110px}
+.eyebrow{display:flex;align-items:center;gap:18px;margin-bottom:34px}
+.eyebrow .skew{transform:skewX(-12deg);background:var(--orange);color:#14100a;font:800 21px "Microsoft YaHei";
+ padding:10px 26px;letter-spacing:4px}
+.eyebrow .rest{font:600 21px Consolas;color:var(--dim);letter-spacing:3px}
+h1{font-size:96px;line-height:1.26;margin:0;font-weight:900;letter-spacing:.005em}
+h1 .blue{color:var(--blue)} h1 .orange{color:var(--orange)}
+.vs-row{display:flex;gap:34px;margin-top:52px}
+.vs-card{flex:1;background:var(--panel);border:1px solid var(--edge);border-top:4px solid var(--blue);
+ transform:skewX(-8deg);padding:26px 40px}
+.vs-card.o{border-top-color:var(--orange)}
+.vs-card .inner{transform:skewX(8deg)}
+.vs-card .lab{font:700 20px Consolas;color:var(--dim);letter-spacing:2px}
+.vs-card .big{font:900 64px Consolas;margin-top:6px;font-variant-numeric:tabular-nums}
+.vs-card .big.blue{color:var(--blue)} .vs-card .big.orange{color:var(--orange)}
+.vs-card .desc{font-size:22px;color:#aebdd6;margin-top:8px}
+.foot{display:flex;justify-content:space-between;padding:0 110px 50px;font:600 20px Consolas;color:var(--dim);letter-spacing:3px}
+</style>
+</head>
+<body><div class="deck-viewport"><div class="deck-stage" id="stage">
+<section class="slide active">
+  <div class="top">
+    <div class="league"><div class="mark"></div><span class="t">PARALLEL&nbsp;COMPUTING</span><span class="b">LEAGUE · FINAL</span></div>
+    <div class="live"><div class="dot"></div>LIVE · FAULTS 9/9 CLEARED</div>
+  </div>
+  <div class="mid">
+    <div class="eyebrow"><span class="skew">STAGE 07 · 核心设计</span><span class="rest">THE ONE IDEA</span></div>
+    <h1>不给玩家存"当前分数"<br>存加分事件的<span class="blue">不可变集合</span></h1>
+    <div class="vs-row">
+      <div class="vs-card"><div class="inner"><div class="lab">SCORE</div><div class="big blue">&Sigma; entries</div><div class="desc">分数 = 条目求和</div></div></div>
+      <div class="vs-card o"><div class="inner"><div class="lab">MERGE</div><div class="big orange">A &cup; B</div><div class="desc">并集幂等 · 乱序无关</div></div></div>
+      <div class="vs-card"><div class="inner"><div class="lab">RECORD</div><div class="big blue">9 / 9</div><div class="desc">故障全部 PASS</div></div></div>
+    </div>
+  </div>
+  <div class="foot"><span>SPEAKER A</span><span>07 / 21</span><span>EST. 2026</span></div>
+</section>
+</div></div>
+<script>
+const fit=()=>{const v=document.querySelector('.deck-viewport'),s=document.getElementById('stage');
+const k=Math.min(v.clientWidth/1920,v.clientHeight/1080);
+s.style.transform=`translate(${(v.clientWidth-1920*k)/2}px,${(v.clientHeight-1080*k)/2}px) scale(${k})`};
+addEventListener('resize',fit);fit();
+</script>
+</body>
+</html>

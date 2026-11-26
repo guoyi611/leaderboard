@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>风格预览 P2 · 霓虹 CRT 街机</title>
+<style>
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#0a0512}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:#0a0512}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:#0a0512}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;visibility:hidden;opacity:0;pointer-events:none}
+.slide.active{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+:root{--void:#0a0512;--pink:#ff2d95;--cyan:#00f0ff;--purple:#8b5cf6;--text:#f5ecff;--dim:#9b8ab8}
+.slide{font-family:"Microsoft YaHei",sans-serif;color:var(--text);display:flex;flex-direction:column;padding:80px 110px;
+ background:radial-gradient(1400px 800px at 50% 0%,rgba(139,92,246,.18),transparent 65%),var(--void)}
+/* CRT scanlines + vignette */
+.slide::after{content:"";position:absolute;inset:0;pointer-events:none;
+ background:repeating-linear-gradient(rgba(0,0,0,.22) 0 2px,transparent 2px 5px);
+ box-shadow:inset 0 0 240px rgba(0,0,0,.75)}
+.mid{flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2}
+.neo-top{display:flex;justify-content:space-between;position:relative;z-index:2;font:600 24px Consolas,monospace;letter-spacing:6px}
+.neo-top .l{color:var(--cyan);text-shadow:0 0 18px rgba(0,240,255,.8)}
+.neo-top .r{color:var(--pink);text-shadow:0 0 18px rgba(255,45,149,.8)}
+h1{font-size:100px;line-height:1.32;margin:0;font-weight:900;letter-spacing:.01em}
+h1 .glow-p{color:var(--pink);text-shadow:0 0 30px rgba(255,45,149,.65),0 0 80px rgba(255,45,149,.3)}
+h1 .glow-c{color:var(--cyan);text-shadow:0 0 30px rgba(0,240,255,.65),0 0 80px rgba(0,240,255,.3)}
+.chip-row{display:flex;gap:26px;margin-top:56px;position:relative;z-index:2}
+.neo-chip{font:600 26px Consolas,monospace;letter-spacing:2px;padding:18px 36px;border-radius:10px;
+ border:1.5px solid rgba(0,240,255,.65);color:var(--cyan);background:rgba(0,240,255,.06);
+ box-shadow:0 0 24px rgba(0,240,255,.25),inset 0 0 18px rgba(0,240,255,.08)}
+.neo-chip.pk{border-color:rgba(255,45,149,.7);color:var(--pink);background:rgba(255,45,149,.06);
+ box-shadow:0 0 24px rgba(255,45,149,.25),inset 0 0 18px rgba(255,45,149,.08)}
+.neo-chip.pu{border-color:rgba(139,92,246,.7);color:#c4b0ff;background:rgba(139,92,246,.08);
+ box-shadow:0 0 24px rgba(139,92,246,.3)}
+.sub{margin-top:50px;font-size:29px;color:var(--dim);line-height:1.7;position:relative;z-index:2}
+.sub b{color:var(--text)}
+.foot{display:flex;justify-content:space-between;font:500 22px Consolas,monospace;color:var(--dim);letter-spacing:4px;position:relative;z-index:2}
+.flicker{animation:flk 3.2s infinite}
+@keyframes flk{0%,93%,96%,100%{opacity:1}94.5%{opacity:.55}}
+</style>
+</head>
+<body><div class="deck-viewport"><div class="deck-stage" id="stage">
+<section class="slide active">
+  <div class="neo-top"><span class="flicker">INSERT COIN &middot; LEADERBOARD ONLINE</span><span>9/9 FAULTS CLEARED</span></div>
+  <div class="mid">
+    <h1>不给玩家存"当前分数"<br>存加分事件的<span class="glow-c">不可变集合</span></h1>
+    <div class="chip-row">
+      <div class="neo-chip">score = &Sigma; entries</div>
+      <div class="neo-chip pk">merge = A &cup; B</div>
+      <div class="neo-chip pu">POWER-UP: IDEMPOTENT</div>
+    </div>
+    <p class="sub"><b>一个数据结构,九个故障变无害</b> —— 重复投递被并集吸收 · 乱序被交换律化解 · 分区愈合即两侧之和</p>
+  </div>
+  <div class="foot"><span>ARCADE MODE · 2026</span><span>SPEAKER A</span><span>07 / 21</span></div>
+</section>
+</div></div>
+<script>
+const fit=()=>{const v=document.querySelector('.deck-viewport'),s=document.getElementById('stage');
+const k=Math.min(v.clientWidth/1920,v.clientHeight/1080);
+s.style.transform=`translate(${(v.clientWidth-1920*k)/2}px,${(v.clientHeight-1080*k)/2}px) scale(${k})`};
+addEventListener('resize',fit);fit();
+</script>
+</body>
+</html>

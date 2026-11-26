@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>排行榜集群 · 地面控制台</title>
+<style>
+  :root {
+    --void: #070b14; --panel: #0d1420; --panel2: #101a2b; --line: #1c2a40;
+    --phosphor: #35e08a; --phosphor-dim: #1d7a4f;
+    --amber: #ffb340; --alarm: #ff4d5e; --ice: #7dd3fc;
+    --text: #cfe0f5; --dim: #5b6b82; --mono: "Cascadia Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--void); color: var(--text); overflow: hidden;
+    font-family: "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 14px;
+  }
+  /* 遥测网格底纹 */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px; opacity: .18;
+  }
+  #app { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; }
+
+  /* ---------- 顶部任务条 ---------- */
+  header {
+    height: 64px; flex: none; display: flex; align-items: center; gap: 26px;
+    padding: 0 22px; border-bottom: 1px solid var(--line); background: #0a111e;
+  }
+  .brand .eyebrow {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 3px;
+    color: var(--phosphor); text-transform: uppercase;
+  }
+  .brand h1 { font-size: 17px; font-weight: 700; letter-spacing: 2px; margin-top: 2px; }
+  .mission { display: flex; align-items: baseline; gap: 10px; margin-left: 8px; }
+  .mission .label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--dim); }
+  .mission .t { font-family: var(--mono); font-size: 24px; color: var(--phosphor); font-variant-numeric: tabular-nums; }
+  .fleet { margin-left: auto; text-align: right; }
+  .fleet .online { font-family: var(--mono); font-size: 18px; font-variant-numeric: tabular-nums; }
+  .fleet .sub { font-size: 11px; color: var(--dim); letter-spacing: 1px; }
+  .faults-badge {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 1px;
+    padding: 4px 10px; border: 1px solid var(--line); border-radius: 3px; color: var(--dim);
+  }
+  .faults-badge.active { color: var(--amber); border-color: #ffb34066; background: #ffb34011; }
+
+  #layout { flex: 1; display: flex; min-height: 0; }
+
+  /* ---------- 左:拓扑 ---------- */
+  #topo-panel { flex: 1.2; position: relative; min-width: 480px; }
+  #topo { width: 100%; height: 100%; display: block; }
+  .rail {
+    position: absolute; left: 14px; top: 12px; font-family: var(--mono);
+    font-size: 10px; letter-spacing: 2px; color: var(--dim); line-height: 1.9;
+  }
+  .rail b { color: var(--phosphor); font-weight: 400; }
+  .node .ring { fill: none; stroke: var(--line); stroke-width: 1; }
+  .node .scan { fill: none; stroke: var(--phosphor-dim); stroke-width: 2.5;
+                stroke-dasharray: 22 200; stroke-linecap: round; }
+  .node text.name { fill: var(--text); font-size: 14px; font-weight: 700;
+                    text-anchor: middle; letter-spacing: 1px; }
+  .node text.meta { fill: var(--dim); font-size: 10.5px; text-anchor: middle;
+                    font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .node text.role { fill: var(--ice); font-size: 9px; text-anchor: middle;
+                    letter-spacing: 1.5px; font-family: var(--mono); }
+  .node text.lamp { font-size: 12px; text-anchor: middle; font-family: var(--mono); }
+  .node.down .ring { stroke: #ff4d5e44; }
+  .node.down text.name { fill: var(--dim); }
+  .node.skew .scan { stroke: var(--amber); }
+  .gossip-link { stroke: #1c2a40; stroke-width: 1.5; }
+  .gossip-link.partition { stroke: var(--alarm); stroke-width: 2;
+                           stroke-dasharray: 3 8; }
+  .gossip-link.delay { stroke: var(--amber); stroke-dasharray: 12 5; }
+  .gossip-link.dup { stroke: var(--phosphor-dim); stroke-dasharray: 2 4; }
+  .edge-label { font-size: 9.5px; text-anchor: middle; fill: var(--dim);
+                font-family: var(--mono); letter-spacing: 1.5px; }
+  .edge-label.partition { fill: var(--alarm); }
+  .edge-label.delay { fill: var(--amber); }
+  .particle { fill: var(--phosphor); }
+  .particle.paused { display: none; }
+  #proxybox rect { fill: #101a2b; stroke: #2a3f60; stroke-width: 1; }
+  #proxybox .pt { fill: var(--ice); font-size: 12px; text-anchor: middle;
+                  letter-spacing: 2px; font-family: var(--mono); }
+  #proxybox .ps { fill: var(--dim); font-size: 9.5px; text-anchor: middle;
+                  font-family: var(--mono); letter-spacing: 1px; }
+
+  /* ---------- 右列 ---------- */
+  #right { flex: 1; min-width: 540px; display: flex; flex-direction: column; min-height: 0;
+           border-left: 1px solid var(--line); }
+  .sec-title {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 2.5px; color: var(--dim);
+    text-transform: uppercase; padding: 10px 16px 8px; flex: none;
+  }
+  .sec-title b { color: var(--phosphor); font-weight: 400; }
+
+  #board-panel { height: 38%; flex: none; border-bottom: 1px solid var(--line);
+                 display: flex; flex-direction: column; }
+  #bars { flex: 1; overflow: hidden; padding: 0 16px 10px; }
+  .bar-row { display: flex; align-items: center; height: 24px; margin: 2.5px 0; gap: 10px; }
+  .bar-rank { width: 22px; font-family: var(--mono); font-size: 11px; color: var(--dim); text-align: right; }
+  .bar-row:first-child .bar-rank { color: var(--amber); }
+  .bar-name { width: 128px; text-align: right; white-space: nowrap; overflow: hidden;
+              text-overflow: ellipsis; font-size: 12.5px; }
+  .bar-track { flex: 1; background: #101a2b; height: 14px; position: relative; border-radius: 2px; }
+  .bar-fill { height: 100%; border-radius: 2px; background: var(--phosphor-dim);
+              transition: width .7s cubic-bezier(.2,.8,.2,1); }
+  .bar-row:first-child .bar-fill { background: linear-gradient(90deg, #1d7a4f, #35e08a); }
+  .bar-val { width: 58px; font-family: var(--mono); font-size: 12.5px; color: var(--phosphor);
+             font-variant-numeric: tabular-nums; }
+  .empty-hint { color: var(--dim); font-size: 12px; padding: 20px 4px; }
+
+  /* 活动故障 */
+  #faults-strip { flex: none; border-bottom: 1px solid var(--line);
+                  min-height: 40px; padding: 4px 16px 8px; }
+  #faults-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .5px;
+    padding: 3px 8px; border: 1px solid #ffb34055; color: var(--amber);
+    background: #ffb3400d; border-radius: 3px;
+  }
+  .chip button { background: none; border: none; color: var(--dim); cursor: pointer;
+                 font-family: var(--mono); font-size: 12px; padding: 0 2px; }
+  .chip button:hover { color: var(--alarm); }
+  .chip.none { border-color: var(--line); color: var(--dim); background: none; }
+  #faults-strip .note { color: var(--dim); font-size: 11px; margin-top: 5px; }
+
+  /* 控制台 */
+  #ctrl-panel { flex: 1; overflow-y: auto; padding: 0 16px 12px; }
+  .ctrl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 9px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+          padding: 9px 11px; }
+  .card h3 { font-family: var(--mono); font-size: 10.5px; letter-spacing: 2px;
+             color: var(--ice); font-weight: 400; margin-bottom: 7px; text-transform: uppercase; }
+  .card.fault h3 { color: var(--amber); }
+  .card select, .card input[type=text] {
+    background: #101a2b; color: var(--text); border: 1px solid var(--line);
+    border-radius: 4px; padding: 3.5px 6px; font-size: 12px; margin-right: 3px;
+    font-family: var(--mono); width: 74px;
+  }
+  .card button {
+    background: #101a2b; color: var(--text); border: 1px solid var(--line);
+    border-radius: 4px; padding: 4px 10px; margin: 2px 2px 2px 0; cursor: pointer;
+    font-size: 12px; font-family: var(--mono); letter-spacing: .5px;
+  }
+  .card button:hover { border-color: var(--phosphor); color: var(--phosphor); }
+  .card.fault button:hover { border-color: var(--amber); color: var(--amber); }
+  .card button.danger:hover { border-color: var(--alarm); color: var(--alarm); }
+  .card .hint { color: var(--dim); font-size: 10.5px; margin-top: 5px; line-height: 1.55; }
+  .card .hint b { color: var(--amber); font-weight: 400; }
+
+  /* 日志 */
+  #log-panel { height: 118px; flex: none; border-top: 1px solid var(--line);
+               background: #0a111e; padding: 6px 16px; overflow-y: auto;
+               font-family: var(--mono); font-size: 11.5px; line-height: 1.65; }
+  #log-panel .t { color: #3a4a63; margin-right: 10px; font-variant-numeric: tabular-nums; }
+  #log-panel .ok { color: var(--phosphor); }
+  #log-panel .warn { color: var(--amber); }
+  #log-panel .err { color: var(--alarm); }
+  #log-panel .info { color: var(--ice); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .particle, .node .scan { display: none; }
+    .bar-fill { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <div class="eyebrow">Distributed KV &middot; Ground Control</div>
+      <h1>游戏排行榜集群 &middot; 故障注入演示台</h1>
+    </div>
+    <div class="mission">
+      <span class="label">MISSION<br>TIME</span>
+      <span class="t" id="mt">T+00:00:00</span>
+    </div>
+    <div class="fleet">
+      <div class="online" id="fleet-online">3/3</div>
+      <div class="sub">NODES ONLINE</div>
+    </div>
+    <div class="faults-badge" id="faults-badge">NO ACTIVE FAULTS</div>
+  </header>
+
+  <div id="layout">
+    <div id="topo-panel">
+      <div class="rail">
+        TELEMETRY<br>
+        replica &times; 3 &middot; gossip push 1s<br>
+        WAL <b id="rail-wal">on</b> &middot; mode <b>eventual</b>
+      </div>
+      <svg id="topo" viewBox="0 0 800 660" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
+    <div id="right">
+      <div id="board-panel">
+        <div class="sec-title">Leaderboard &middot; Top 10 &middot; 视图 <b id="board-node">node1</b></div>
+        <div id="bars"><div class="empty-hint">暂无数据 — 在下方控制台给玩家加分</div></div>
+      </div>
+
+      <div id="faults-strip">
+        <div id="faults-chips"><span class="chip none">系统正常 &middot; 无注入</span></div>
+        <div class="note">注入后观察左侧拓扑: 粒子=复制数据流, 红色断线=分区</div>
+      </div>
+
+      <div class="sec-title">Fault Injection &middot; 故障注入控制台</div>
+      <div id="ctrl-panel">
+        <div class="ctrl-grid">
+          <div class="card fault">
+            <h3>网络分区</h3>
+            <select id="part-a"><option>node1</option><option>node2</option><option>node3</option></select>
+            <select id="part-b"><option>node2</option><option>node1</option><option>node3</option></select>
+            <button onclick="injectPartition()">分区</button>
+            <div class="hint">双向黑洞, gossip 中断, 两侧各自接受写。<b>真宕机</b>用终端 docker compose kill。</div>
+          </div>
+          <div class="card fault">
+            <h3>延迟 / 乱序 / 重复</h3>
+            <select id="net-dst"><option>node2</option><option>node1</option><option>node3</option></select>
+            <button onclick="injectDelay()">延迟10s乱序</button>
+            <button onclick="injectDup()">重复&times;3</button>
+            <div class="hint">作用于 所有节点 &rarr; 目标 的复制消息; 乱序靠并集 merge 收敛。</div>
+          </div>
+          <div class="card fault">
+            <h3>响应丢失</h3>
+            <select id="drop-dst"><option>node2</option><option>node1</option><option>node3</option></select>
+            <button onclick="injectDrop()">吞掉写响应</button>
+            <div class="hint">写已落盘但客户端超时 &rarr; 同 request_id 重试不多计。</div>
+          </div>
+          <div class="card fault">
+            <h3>时钟倒退</h3>
+            <select id="clock-node"><option>node3</option><option>node1</option><option>node2</option></select>
+            <button onclick="clockBack(-60)">倒退 60s</button>
+            <button onclick="clockBack(60)">恢复</button>
+            <div class="hint">让 LWW 寄存器丢更新; 条目集主路径免疫(下方对照)。</div>
+          </div>
+          <div class="card">
+            <h3>写入负载</h3>
+            <select id="write-node"><option>node1</option><option>node2</option><option>node3</option></select>
+            <input type="text" id="write-player" value="alice" maxlength="24">
+            <button onclick="doWrite(1)">+1</button>
+            <button onclick="doWrite(10)">+10</button>
+            <div class="hint">任意副本可收写 = 热点分片的基础。</div>
+          </div>
+          <div class="card">
+            <h3>LWW 寄存器对照</h3>
+            <select id="lww-node"><option>node1</option><option>node2</option><option>node3</option></select>
+            <button onclick="lwwWrite('v3')">写 v3</button>
+            <button onclick="lwwWrite('v4')">写 v4</button>
+            <div class="hint">先倒退 node3 时钟, 再从 node3 写 v4 &rarr; 终值停留 v3。</div>
+          </div>
+          <div class="card">
+            <h3>观察视角</h3>
+            排行榜视图
+            <select id="view-node" onchange="$('board-node').textContent=this.value" style="width:100px">
+              <option>node1</option><option>node2</option><option>node3</option>
+            </select>
+            <div class="hint">切副本对比旧值窗口 — 最终一致性的直观展示。</div>
+          </div>
+          <div class="card fault">
+            <h3>一键愈合</h3>
+            <button class="danger" onclick="healAll()">清除全部规则</button>
+            <div class="hint">分区愈合, gossip 粒子恢复, 分数自动收敛。</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="log-panel"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const PROXY = location.origin;
+const NODES = ["node1", "node2", "node3"];
+const $ = id => document.getElementById(id);
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const t0 = Date.now();
+
+function log(msg, cls) {
+  const t = new Date().toTimeString().slice(0, 8);
+  const div = document.createElement("div");
+  div.innerHTML = `<span class="t">${t}</span><span class="${cls || "info"}">${msg}</span>`;
+  const panel = $("log-panel");
+  panel.prepend(div);
+  while (panel.children.length > 80) panel.removeChild(panel.lastChild);
+}
+
+async function api(method, path, body, target) {
+  const headers = {};
+  if (body) headers["Content-Type"] = "application/json";
+  if (target) { headers["X-Source-Node"] = "dashboard"; headers["X-Target-Node"] = target; }
+  const r = await fetch(PROXY + path, { method, headers,
+    body: body ? JSON.stringify(body) : undefined });
+  try { return await r.json(); } catch (e) { return null; }
+}
+
+/* ---------------- 注入 ---------------- */
+let rulesCache = [];
+async function addRule(rule, silent) {
+  const r = await api("POST", "/rules", rule);
+  if (r && !silent) log(`INJECT #${r.id} ${rule.type} ${rule.src} &rarr; ${rule.dst}`, "warn");
+  refresh();
+}
+function injectPartition() {
+  const a = $("part-a").value, b = $("part-b").value;
+  if (a === b) return log("分区两端不能相同", "err");
+  addRule({ type: "partition", src: a, dst: b });
+  addRule({ type: "partition", src: b, dst: a });
+}
+function injectDelay()  { addRule({ type: "delay", src: "node*", dst: $("net-dst").value, seconds: 10, shuffle: true }); }
+function injectDup()    { addRule({ type: "duplicate", src: "node*", dst: $("net-dst").value, times: 3 }); }
+function injectDrop()   { addRule({ type: "drop_response", src: "*", dst: $("drop-dst").value }); }
+async function clockBack(delta) {
+  const n = $("clock-node").value;
+  const r = await api("POST", "/admin/clock", { offset_delta: delta }, n);
+  if (r) log(`${n} 时钟 ${delta > 0 ? "+" : ""}${delta}s (offset ${r.clock_offset}s)`, delta < 0 ? "warn" : "ok");
+}
+async function doWrite(delta) {
+  const n = $("write-node").value, p = $("write-player").value.trim() || "alice";
+  const r = await api("POST", "/write",
+    { player: p, delta, request_id: crypto.randomUUID() }, n);
+  if (r) log(`write ${p} +${delta} @ ${n} &rarr; score ${r.score}${r.duplicate ? " (dup)" : ""}`, "ok");
+  else log(`write ${p} @ ${n} 超时/失败`, "err");
+}
+async function lwwWrite(v) {
+  const r = await api("POST", "/lww/lww-demo", { value: v }, $("lww-node").value);
+  if (r) log(`LWW v=${v} @ ${$("lww-node").value} accepted=${r.accepted} now=${JSON.stringify(r.current)}`,
+             r.accepted ? "ok" : "err");
+}
+async function healAll() {
+  await fetch(PROXY + "/rules", { method: "DELETE" });
+  log("HEAL 清除全部规则, 收敛中...", "ok");
+  refresh();
+}
+async function removeRule(id) {
+  await fetch(PROXY + "/rules/" + id, { method: "DELETE" });
+  log(`解除规则 #${id}`, "ok");
+  refresh();
+}
+
+/* ---------------- 拓扑 ---------------- */
+const POS = { node1: [200, 180], node2: [600, 180], node3: [400, 500] };
+const PROXY_POS = [400, 300];
+const EDGES = [["node1", "node2"], ["node1", "node3"], ["node2", "node3"]];
+const nodeState = {};
+const particles = [];
+const svgNS = "http://www.w3.org/2000/svg";
+
+function el(tag, attrs) {
+  const e = document.createElementNS(svgNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+function initTopo() {
+  const svg = $("topo");
+  // client -> proxy
+  svg.appendChild(el("line", { class: "gossip-link",
+    x1: 90, y1: 84, x2: PROXY_POS[0] - 84, y2: PROXY_POS[1] - 20 }));
+  const clabel = el("text", { class: "edge-label", x: 150, y: 150 });
+  clabel.textContent = "CLIENTS / DEMOS";
+  svg.appendChild(clabel);
+
+  // proxy
+  const pg = el("g", {}); pg.id = "proxybox";
+  pg.appendChild(el("rect", { x: PROXY_POS[0] - 84, y: PROXY_POS[1] - 26,
+    width: 168, height: 52, rx: 6 }));
+  const pt = el("text", { class: "pt", x: PROXY_POS[0], y: PROXY_POS[1] - 4 });
+  pt.textContent = "NET-PROXY :9000";
+  const ps = el("text", { class: "ps", x: PROXY_POS[0], y: PROXY_POS[1] + 14 });
+  ps.textContent = "delay / dup / partition / drop";
+  pg.appendChild(pt); pg.appendChild(ps);
+  svg.appendChild(pg);
+
+  // proxy -> node links
+  for (const n of NODES) {
+    svg.appendChild(el("line", { class: "gossip-link",
+      x1: PROXY_POS[0], y1: PROXY_POS[1], x2: POS[n][0], y2: POS[n][1] }));
+  }
+  // gossip edges + particles
+  for (const [a, b] of EDGES) {
+    const [x1, y1] = POS[a], [x2, y2] = POS[b];
+    const line = el("line", { class: "gossip-link", x1, y1, x2, y2, id: `edge-${a}-${b}` });
+    svg.appendChild(line);
+    const lb = el("text", { class: "edge-label",
+      x: (x1 + x2) / 2, y: (y1 + y2) / 2 - 7, id: `elabel-${a}-${b}` });
+    lb.textContent = "";
+    svg.appendChild(lb);
+    if (!reduced) {
+      for (let i = 0; i < 3; i++) {
+        const dot = el("circle", { class: "particle", r: 2.6 });
+        svg.appendChild(dot);
+        particles.push({ dot, x1, y1, x2, y2, phase: Math.random(), speed: 0.16 + Math.random() * 0.1, edge: `${a}-${b}` });
+      }
+    }
+  }
+  // nodes
+  for (const n of NODES) {
+    const [x, y] = POS[n];
+    const g = el("g", { id: `node-${n}`, class: "node" });
+    g.appendChild(el("circle", { class: "ring", cx: x, cy: y, r: 66 }));
+    const scan = el("circle", { class: "scan", cx: x, cy: y, r: 66, id: `scan-${n}` });
+    g.appendChild(scan);
+    const name = el("text", { class: "name", x, y: y - 20 }); name.textContent = n;
+    const role = el("text", { class: "role", x, y: y - 6 });
+    role.textContent = "REPLICA + WAL"; role.id = `role-${n}`;
+    const m1 = el("text", { class: "meta", x, y: y + 12 }); m1.id = `m1-${n}`;
+    const m2 = el("text", { class: "meta", x, y: y + 28 }); m2.id = `m2-${n}`;
+    const m3 = el("text", { class: "meta", x, y: y + 44,
+      style: "fill:#ffb340" }); m3.id = `m3-${n}`;
+    const lamp = el("text", { class: "lamp", x: x + 50, y: y - 50 }); lamp.id = `lamp-${n}`;
+    g.append(name, role, m1, m2, m3, lamp);
+    svg.appendChild(g);
+    nodeState[n] = { up: false };
+  }
+}
+
+function matchPat(v, pat) {
+  return pat === "*" || pat === v || (pat.endsWith("*") && v.startsWith(pat.slice(0, -1)));
+}
+function edgeEffect(a, b, rules) {
+  let cls = "gossip-link", label = "", blocked = false;
+  for (const r of rules) {
+    if (r.type === "partition") {
+      const ab = matchPat(a, r.src) && matchPat(b, r.dst);
+      const ba = matchPat(b, r.src) && matchPat(a, r.dst);
+      if (ab || ba) return { cls: "gossip-link partition", label: "PARTITION", blocked: true };
+    }
+    if (r.type === "delay" && (matchPat(a, r.dst) || matchPat(b, r.dst))) {
+      cls = "gossip-link delay"; label = "DELAY 10s";
+    }
+    if (r.type === "duplicate" && (matchPat(a, r.dst) || matchPat(b, r.dst))) {
+      if (cls === "gossip-link") { cls = "gossip-link dup"; label = "DUP x3"; }
+    }
+  }
+  return { cls, label, blocked };
+}
+
+function applyTopo(rules) {
+  let online = 0;
+  for (const n of NODES) {
+    const st = nodeState[n];
+    const g = $(`node-${n}`);
+    if (st.up) online++;
+    g.setAttribute("class", "node" + (st.up ? "" : " down") + (st.clock ? " skew" : ""));
+    $(`lamp-${n}`).textContent = st.up ? "\u25CF" : "\u25CB";
+    $(`lamp-${n}`).setAttribute("fill", st.up ? "#35e08a" : "#5b6b82");
+    $(`scan-${n}`).style.display = (st.up && !reduced) ? "" : "none";
+    $(`m1-${n}`).textContent = `entries ${st.entries}  players ${st.players}`;
+    $(`m2-${n}`).textContent = `total ${st.total}  wal ${st.wal}`;
+    $(`m3-${n}`).textContent = st.clock ? `clock ${st.clock > 0 ? "+" : ""}${st.clock}s` : "";
+  }
+  $("fleet-online").textContent = `${online}/3`;
+  $("fleet-online").style.color = online === 3 ? "var(--phosphor)" : "var(--amber)";
+  const blockedEdges = new Set();
+  for (const [a, b] of EDGES) {
+    const eff = edgeEffect(a, b, rules);
+    const line = $(`edge-${a}-${b}`);
+    line.setAttribute("class", eff.cls);
+    const lb = $(`elabel-${a}-${b}`);
+    lb.textContent = eff.label;
+    lb.setAttribute("class", "edge-label" + (eff.cls.endsWith("partition") ? " partition" : eff.cls.endsWith("delay") ? " delay" : ""));
+    if (eff.blocked) blockedEdges.add(`${a}-${b}`);
+  }
+  for (const p of particles) {
+    p.dot.setAttribute("class", blockedEdges.has(p.edge) ? "particle paused" : "particle");
+    p.blocked = blockedEdges.has(p.edge);
+  }
+}
+
+/* 粒子与扫描弧动画 */
+function animate(ts) {
+  if (!reduced) {
+    const t = ts / 1000;
+    for (const p of particles) {
+      if (p.blocked) continue;
+      const u = (p.phase + t * p.speed) % 1;
+      // 双向流动: 偶数周期 a->b, 奇数 b->a (全量 push 是双向的)
+      const fwd = Math.floor(p.phase + t * p.speed) % 2 === 0;
+      const k = fwd ? u : 1 - u;
+      p.dot.setAttribute("cx", p.x1 + (p.x2 - p.x1) * k);
+      p.dot.setAttribute("cy", p.y1 + (p.y2 - p.y1) * k);
+    }
+    for (const n of NODES) {
+      const scan = $(`scan-${n}`);
+      if (scan) {
+        scan.setAttribute("transform",
+          `rotate(${(t * 90) % 360} ${POS[n][0]} ${POS[n][1]})`);
+      }
+    }
+  }
+  const s = Math.floor((Date.now() - t0) / 1000);
+  const hh = String(Math.floor(s / 3600)).padStart(2, "0");
+  const mm = String(Math.floor(s % 3600 / 60)).padStart(2, "0");
+  const ss = String(s % 60).padStart(2, "0");
+  $("mt").textContent = `T+${hh}:${mm}:${ss}`;
+  requestAnimationFrame(animate);
+}
+
+/* ---------------- 轮询 ---------------- */
+function renderFaultChips(rules) {
+  const box = $("faults-chips");
+  box.innerHTML = "";
+  if (!rules.length) {
+    box.innerHTML = `<span class="chip none">系统正常 &middot; 无注入</span>`;
+    const b = $("faults-badge");
+    b.textContent = "NO ACTIVE FAULTS"; b.classList.remove("active");
+    return;
+  }
+  for (const r of rules) {
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    const detail = r.type === "delay" ? `delay ${r.seconds}s${r.shuffle ? " shuffle" : ""}`
+      : r.type === "duplicate" ? `dup x${r.times}` : r.type;
+    chip.innerHTML = `#${r.id} ${detail} &nbsp; ${r.src} &rarr; ${r.dst}`;
+    const btn = document.createElement("button");
+    btn.textContent = "\u2715"; btn.title = "解除";
+    btn.onclick = () => removeRule(r.id);
+    chip.appendChild(btn);
+    box.appendChild(chip);
+  }
+  const b = $("faults-badge");
+  b.textContent = `ACTIVE FAULTS: ${rules.length}`;
+  b.classList.add("active");
+}
+
+async function refresh() {
+  try {
+    const r = await api("GET", "/rules");
+    rulesCache = (r && r.rules) || [];
+    renderFaultChips(rulesCache);
+  } catch (e) {}
+  await Promise.all(NODES.map(async n => {
+    try {
+      const st = await Promise.race([
+        api("GET", "/stats", null, n),
+        new Promise((_, rej) => setTimeout(() => rej(), 3000)),
+      ]);
+      if (!st) throw 0;
+      nodeState[n] = {
+        up: true, entries: st.entry_count, total: st.total, players: st.player_count,
+        clock: st.clock_offset ? st.clock_offset.toFixed(0) : null,
+        wal: st.wal_enabled ? "on" : "OFF",
+      };
+    } catch (e) {
+      nodeState[n] = { up: false, entries: "-", total: "-", players: "-", clock: null, wal: "-" };
+    }
+  }));
+  applyTopo(rulesCache);
+}
+
+let boardTick = 0;
+async function pollBoard() {
+  const target = $("view-node").value;
+  try {
+    const r = await Promise.race([
+      api("GET", "/top/10", null, target),
+      new Promise((_, rej) => setTimeout(() => rej(), 3000)),
+    ]);
+    if (!r || !r.top || !r.top.length) return;
+    const max = Math.max(...r.top.map(x => x[1]), 1);
+    const box = $("bars");
+    box.innerHTML = "";
+    r.top.forEach(([name, score], i) => {
+      const row = document.createElement("div");
+      row.className = "bar-row";
+      row.innerHTML = `
+        <div class="bar-rank">${String(i + 1).padStart(2, "0")}</div>
+        <div class="bar-name">${name.replace(/</g, "&lt;")}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(score / max) * 100}%"></div></div>
+        <div class="bar-val">${score}</div>`;
+      box.appendChild(row);
+    });
+  } catch (e) { /* 保持旧值 */ }
+}
+
+initTopo();
+setInterval(() => { refresh(); if (boardTick++ % 2 === 0) pollBoard(); }, 1200);
+refresh(); pollBoard();
+requestAnimationFrame(animate);
+log("地面控制台就绪 &middot; 所有流量经 net-proxy", "info");
+</script>
+</body>
+</html>

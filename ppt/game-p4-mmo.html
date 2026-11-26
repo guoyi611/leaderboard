@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>风格预览 P4 · MMO 公会金榜</title>
+<style>
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#171009}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:#171009}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:#171009}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;visibility:hidden;opacity:0;pointer-events:none}
+.slide.active{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+:root{--bg:#171009;--parch:#20170c;--gold:#d8a94a;--gold-b:#f3cf7e;--ink:#e9dcbd;--dim:#9c8a63;--red:#c0563e;--teal:#5aa08c}
+.slide{font-family:"Microsoft YaHei",serif;color:var(--ink);display:flex;flex-direction:column;padding:72px 130px;
+ background:
+  radial-gradient(1200px 700px at 50% -10%,rgba(216,169,74,.13),transparent 60%),
+  repeating-linear-gradient(90deg,rgba(216,169,74,.025) 0 2px,transparent 2px 90px),var(--bg)}
+/* 金色双线框 */
+.slide::before{content:"";position:absolute;inset:34px;border:1.5px solid rgba(216,169,74,.5);pointer-events:none}
+.slide::after{content:"";position:absolute;inset:44px;border:3px double rgba(216,169,74,.32);pointer-events:none}
+.corner{position:absolute;width:56px;height:56px;border:3px solid var(--gold);pointer-events:none}
+.corner.tl{top:22px;left:22px;border-right:none;border-bottom:none}
+.corner.tr{top:22px;right:22px;border-left:none;border-bottom:none}
+.corner.bl{bottom:22px;left:22px;border-right:none;border-top:none}
+.corner.br{bottom:22px;right:22px;border-left:none;border-top:none}
+.top{display:flex;justify-content:space-between;align-items:baseline;padding-top:26px;font-family:Georgia,serif}
+.top .l{font:700 26px Georgia;color:var(--gold);letter-spacing:8px}
+.top .r{font:italic 400 23px Georgia;color:var(--dim)}
+.mid{flex:1;display:flex;flex-direction:column;justify-content:center}
+.kicker{font:italic 700 30px Georgia,"KaiTi",serif;color:var(--red);letter-spacing:.05em;margin-bottom:30px}
+h1{font:900 92px/1.35 "Microsoft YaHei";margin:0;letter-spacing:.02em}
+h1 .gold{color:var(--gold-b);text-shadow:0 2px 0 #6b4f1d,0 0 44px rgba(216,169,74,.35)}
+.rune-row{display:flex;gap:30px;margin-top:54px}
+.rune{border:1.5px solid rgba(216,169,74,.55);background:linear-gradient(180deg,rgba(216,169,74,.10),rgba(216,169,74,.03));
+ padding:22px 40px;font:600 27px Georgia,monospace;color:var(--ink);position:relative}
+.rune::before,.rune::after{content:"&#10022;";position:absolute;color:var(--gold);font-size:15px}
+.rune::before{left:9px;top:8px} .rune::after{right:9px;bottom:8px}
+.rune.hl{background:linear-gradient(180deg,rgba(216,169,74,.28),rgba(216,169,74,.10));color:var(--gold-b)}
+.sub{margin-top:46px;font-size:29px;line-height:1.75;color:#c9b98f}
+.sub b{color:var(--ink)}
+.foot{display:flex;justify-content:space-between;font:400 21px Georgia;color:var(--dim);letter-spacing:3px}
+</style>
+</head>
+<body><div class="deck-viewport"><div class="deck-stage" id="stage">
+<section class="slide active">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="top"><span class="l">排行榜编年史</span><span class="r">Chronicle of the Indestructible Leaderboard</span></div>
+  <div class="mid">
+    <div class="kicker">&mdash; 第七卷 &middot; 核心设计 &mdash;</div>
+    <h1>不给玩家存"当前分数"<br>存加分事件的<span class="gold">不可变集合</span></h1>
+    <div class="rune-row">
+      <div class="rune">score = &Sigma; entries</div>
+      <div class="rune hl">merge = A &cup; B</div>
+      <div class="rune">9 faults sealed</div>
+    </div>
+    <p class="sub"><b>一个数据结构,九个故障封印于无形</b> —— 重复投递被并集吸收,乱序被交换律化解,分区愈合即两侧之和。<br>收敛性乃数学之性质,非测试之运气。</p>
+  </div>
+  <div class="foot"><span>PARALLEL COMPUTING &middot; FINAL QUEST</span><span>SPEAKER A</span><span>Page VII / XXI</span></div>
+</section>
+</div></div>
+<script>
+const fit=()=>{const v=document.querySelector('.deck-viewport'),s=document.getElementById('stage');
+const k=Math.min(v.clientWidth/1920,v.clientHeight/1080);
+s.style.transform=`translate(${(v.clientWidth-1920*k)/2}px,${(v.clientHeight-1080*k)/2}px) scale(${k})`};
+addEventListener('resize',fit);fit();
+</script>
+</body>
+</html>

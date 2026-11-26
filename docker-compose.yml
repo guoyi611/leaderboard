@@ -1,0 +1,73 @@
+services:
+  proxy:
+    build: .
+    command: uvicorn net_proxy:app --host 0.0.0.0 --port 9000 --workers 1
+    ports:
+      - "9000:9000"
+
+  node1:
+    build: .
+    environment: &node-env
+      NODE_NAME: node1
+      PEERS: node2,node3
+      ALL_NODES: node1,node2,node3
+      PROXY_URL: http://proxy:9000
+      WAL_PATH: /data/wal.log
+      WAL_ENABLED: "true"
+      GOSSIP_INTERVAL: "1.0"
+      SLOW_WRITE_MS: "5"
+    volumes:
+      - wal1:/data
+    ports:
+      - "8101:8000"   # demo_06 压测直连口(绕过 proxy,见 README)
+    depends_on:
+      - proxy
+
+  node2:
+    build: .
+    environment:
+      <<: *node-env
+      NODE_NAME: node2
+      PEERS: node1,node3
+    volumes:
+      - wal2:/data
+    ports:
+      - "8102:8000"
+    depends_on:
+      - proxy
+
+  node3:
+    build: .
+    environment:
+      <<: *node-env
+      NODE_NAME: node3
+      PEERS: node1,node2
+    volumes:
+      - wal3:/data
+    ports:
+      - "8103:8000"
+    depends_on:
+      - proxy
+
+  # 仅 demo_05(数据迁移)使用: docker compose --profile migration up -d node4
+  node4:
+    build: .
+    profiles: ["migration"]
+    environment:
+      <<: *node-env
+      NODE_NAME: node4
+      PEERS: node1,node2,node3
+      ALL_NODES: node1,node2,node3
+      MIGRATE_FROM: node1
+      MIGRATION_BATCH: "100"
+      MIGRATE_DELAY: "1.0"
+    volumes:
+      - wal4:/data
+    depends_on:
+      - proxy
+
+volumes:
+  wal1:
+  wal2:
+  wal3:
+  wal4:

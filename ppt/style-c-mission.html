@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>风格预览 C · Mission Control 2.0</title>
+<style>
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#050a12}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:#050a12}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:#050a12}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;visibility:hidden;opacity:0;pointer-events:none}
+.slide.active{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+/* Mission Control 2.0: telemetry atmosphere, phosphor type, grid depth */
+:root{--void:#050a12;--phos:#3dffa0;--amber:#ffb340;--ice:#8fd8ff;--text:#d5e6fa;--dim:#5d7392;--line:rgba(96,255,170,.10)}
+.slide{font-family:"Microsoft YaHei",sans-serif;display:flex;flex-direction:column}
+/* atmosphere layers */
+.slide::before{content:"";position:absolute;inset:0;
+  background:
+   radial-gradient(1100px 600px at 78% 18%, rgba(61,255,160,.10), transparent 60%),
+   radial-gradient(900px 500px at 12% 88%, rgba(143,216,255,.07), transparent 60%),
+   linear-gradient(rgba(96,255,170,.05) 1px, transparent 1px),
+   linear-gradient(90deg, rgba(96,255,170,.05) 1px, transparent 1px);
+  background-size:auto,auto,64px 64px,64px 64px}
+/* scanline */
+.slide::after{content:"";position:absolute;left:0;right:0;height:180px;top:-180px;
+  background:linear-gradient(rgba(61,255,160,0),rgba(61,255,160,.06),rgba(61,255,160,0));
+  animation:scan 7s linear infinite}
+@keyframes scan{to{top:1080px}}
+@media (prefers-reduced-motion:reduce){.slide::after{display:none}}
+.top{position:relative;display:flex;justify-content:space-between;padding:64px 110px 0;align-items:center}
+.tl{font:600 24px/1 "Cascadia Mono",Consolas,monospace;color:var(--phos);letter-spacing:.42em}
+.tr{font:500 22px "Cascadia Mono",Consolas,monospace;color:var(--dim);letter-spacing:.2em}
+.tr b{color:var(--amber);font-weight:600}
+.mid{position:relative;flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 110px}
+.stage-eyebrow{display:flex;align-items:center;gap:22px;margin-bottom:42px}
+.stage-eyebrow .tick{width:52px;height:3px;background:var(--phos)}
+.stage-eyebrow span{font:600 25px "Cascadia Mono",Consolas,monospace;color:var(--phos);letter-spacing:.3em}
+h1{font:900 108px/1.24 "Microsoft YaHei",sans-serif;color:var(--text);margin:0 0 30px;letter-spacing:.01em}
+h1 .phos{color:var(--phos);text-shadow:0 0 42px rgba(61,255,160,.35)}
+h1 .amber{color:var(--amber)}
+.sub{font:400 30px/1.6 "Microsoft YaHei",sans-serif;color:#9fb6d4;margin:0}
+.term-row{display:flex;gap:26px;margin-top:56px}
+.term{font:500 30px/1 "Cascadia Mono",Consolas,monospace;color:var(--phos);
+  border:1px solid rgba(61,255,160,.4);background:rgba(61,255,160,.06);
+  padding:24px 38px;border-radius:8px}
+.term.hot{color:var(--amber);border-color:rgba(255,179,64,.45);background:rgba(255,179,64,.06)}
+.foot{position:relative;display:flex;justify-content:space-between;padding:0 110px 56px;font:500 21px "Cascadia Mono",Consolas,monospace;color:var(--dim);letter-spacing:.15em}
+.mission{position:absolute;right:110px;top:170px;text-align:right}
+.mission .lab{font:600 20px "Cascadia Mono",monospace;color:var(--dim);letter-spacing:.3em}
+.mission .val{font:700 54px "Cascadia Mono",monospace;color:var(--phos);font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="deck-viewport"><div class="deck-stage" id="stage">
+<section class="slide active">
+  <div class="top">
+    <div class="tl">LEADERBOARD · GROUND CONTROL</div>
+    <div class="tr">FAULT TOPICS <b>9/9 PASS</b></div>
+  </div>
+  <div class="mission"><div class="lab">MISSION TIME</div><div class="val">T+00:07</div></div>
+  <div class="mid">
+    <div class="stage-eyebrow"><div class="tick"></div><span>THE ONE IDEA · 核心设计</span></div>
+    <h1>不给玩家存"当前分数"<br>存加分事件的<span class="phos">不可变集合</span></h1>
+    <p class="sub">一个数据结构,九个故障变无害 —— 重复被幂等吸收 · 乱序被交换律化解 · 分区愈合即两侧之和<br>收敛性是数学性质,不是测试运气</p>
+    <div class="term-row">
+      <div class="term">score = Σ entries</div>
+      <div class="term hot">merge = A ∪ B (by request_id)</div>
+    </div>
+  </div>
+  <div class="foot">
+    <span>PARALLEL COMPUTING · FINAL</span>
+    <span>SPEAKER A · 背景与设计</span>
+    <span>07 / 20</span>
+  </div>
+</section>
+</div></div>
+<script>
+const fit=()=>{const v=document.querySelector('.deck-viewport'),s=document.getElementById('stage');
+const k=Math.min(v.clientWidth/1920,v.clientHeight/1080);
+s.style.transform=`translate(${(v.clientWidth-1920*k)/2}px,${(v.clientHeight-1080*k)/2}px) scale(${k})`};
+addEventListener('resize',fit);fit();
+</script>
+</body>
+</html>

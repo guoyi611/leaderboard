@@ -1,0 +1,27 @@
+node_modules/
+__pycache__/
+*.pyc
+local_state/
+*.log
+gen.log
+nohup.out
+
+# 大体积生成物(README 记录再生成方式): AI 蓝图版成品
+slide-deck/indestructible-leaderboard/*.pptx
+slide-deck/indestructible-leaderboard/*.pdf
+slide-deck/indestructible-leaderboard/test-*.png
+slide-deck/indestructible-leaderboard/backend-compare.png
+slide-deck/indestructible-leaderboard/batch.json
+
+# ppt 构建产物与临时预览
+ppt/node_modules/
+ppt/package-lock.json
+ppt/deck-v2.pptx
+ppt/leaderboard-v1-python.pptx.bak
+ppt/preview-*.png
+ppt/v2-*.png
+ppt/fx2-*.png
+ppt/arcade-preview.png
+ppt/game-styles.png
+ppt/final-preview.png
+ppt/style-previews.png

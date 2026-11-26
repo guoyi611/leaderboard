@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>风格预览 B · Broadside</title>
+<style>
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#12100e}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:#12100e}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:#12100e}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;visibility:hidden;opacity:0;pointer-events:none}
+.slide.active{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+/* Broadside: dark editorial, fire orange, bilingual stack */
+:root{--ink:#efe9dd;--paper:#12100e;--fire:#ff4d1c;--dim:#8a8272}
+.slide{padding:90px 120px;display:flex;flex-direction:column;font-family:"Microsoft YaHei",sans-serif}
+.masthead{display:flex;justify-content:space-between;align-items:baseline;border-bottom:3px solid var(--ink);padding-bottom:26px}
+.masthead .l{font:700 30px/1 "Microsoft YaHei";letter-spacing:.5em;color:var(--ink)}
+.masthead .r{font:400 22px "Georgia",serif;font-style:italic;color:var(--dim)}
+.rule-thin{height:1px;background:var(--ink);opacity:.35;margin-top:6px}
+.body{flex:1;display:flex;gap:100px;align-items:center}
+.col-latin{width:640px}
+.col-zh{flex:1}
+.kicker{font:400 26px "Georgia",serif;font-style:italic;color:var(--fire);letter-spacing:.06em;margin-bottom:30px}
+.col-zh h1{font:900 96px/1.22 "Microsoft YaHei",sans-serif;color:var(--ink);margin:0 0 46px}
+h1 .fire{color:var(--fire)}
+.duo{display:flex;gap:26px;margin-bottom:44px}
+.duo .box{border:2px solid var(--ink);padding:22px 30px;font:500 28px "Georgia",monospace;color:var(--ink)}
+.duo .box.solid{background:var(--fire);border-color:var(--fire);color:#12100e}
+.col-zh p{font:400 26px/1.75 "Microsoft YaHei",sans-serif;color:#c8c0b0;margin:0;max-width:900px}
+p b{color:var(--ink);font-weight:700}
+.giant-no{position:absolute;right:100px;bottom:70px;font:900 200px/1 "Georgia",serif;color:transparent;-webkit-text-stroke:2px #3a352c}
+.footline{display:flex;justify-content:space-between;border-top:1px solid #3a352c;padding-top:20px;font:400 20px "Georgia",serif;color:var(--dim);letter-spacing:.08em}
+</style>
+</head>
+<body>
+<div class="deck-viewport"><div class="deck-stage" id="stage">
+<section class="slide active">
+  <div class="masthead">
+    <div class="l">弄不坏的排行榜</div>
+    <div class="r">The Indestructible Leaderboard — No. 07</div>
+  </div>
+  <div class="rule-thin"></div>
+  <div class="body">
+    <div class="col-latin">
+      <div class="kicker">The One Idea</div>
+      <div class="giant-no">∪</div>
+    </div>
+    <div class="col-zh">
+      <h1>不给玩家存"当前分数"<br>存加分事件的<span class="fire">不可变集合</span></h1>
+      <div class="duo">
+        <div class="box">score = Σ entries</div>
+        <div class="box solid">merge = A ∪ B</div>
+      </div>
+      <p><b>一个数据结构,九个故障变无害</b> —— 重复被并集幂等吸收,乱序被交换律化解,分区愈合即两侧之和。收敛性是数学性质,不是测试运气。</p>
+    </div>
+  </div>
+  <div class="footline">
+    <span>PARALLEL COMPUTING · FINAL PROJECT</span>
+    <span>SPEAKER A · 背景与设计</span>
+    <span>07 — 20</span>
+  </div>
+</section>
+</div></div>
+<script>
+const fit=()=>{const v=document.querySelector('.deck-viewport'),s=document.getElementById('stage');
+const k=Math.min(v.clientWidth/1920,v.clientHeight/1080);
+s.style.transform=`translate(${(v.clientWidth-1920*k)/2}px,${(v.clientHeight-1080*k)/2}px) scale(${k})`};
+addEventListener('resize',fit);fit();
+</script>
+</body>
+</html>
