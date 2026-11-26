@@ -73,6 +73,24 @@ python demo_01_crash.py           # 依次运行 9 个演示(断言 PASS/FAIL)
   quorum 模式(W=2)以分区期间少数侧不可用换回线性一致
 - 时钟:正确性不依赖物理时钟(条目并集);LWW 寄存器仅作 topic 8 反例
 
+
+## 交付物导航
+
+| 交付物 | 位置 |
+|---|---|
+| 系统代码 | `src/` `proxy/` `client/` |
+| 9 个故障演示 | `demos/demo_01..09_*.py` |
+| 冒烟测试(无 Docker) | `scripts/dev_local.py` |
+| 课程报告 | `report/report.md`(docx 由 pandoc 生成) |
+| 幻灯片(汇报主力,浏览器打开) | `ppt/slides.html` |
+| 三人讲稿(含追问 QA) | `ppt/speaker-{A,B,C}-*.md` |
+| AI 蓝图版幻灯片(17 页 PNG) | `slide-deck/indestructible-leaderboard/` |
+
+汇报人:李祈衡(背景与架构) · 陈俊安(故障演示) · 张世朗(理论与总结)。
+
+AI 蓝图版的 pptx/pdf 成品体积较大未入库,可用 `slide-deck/indestructible-leaderboard/prompts/`
+里的提示词 + DashScope wan2.7-image 重新生成后,由 merge 脚本合成。
+
 ## 目录结构
 
 ```
